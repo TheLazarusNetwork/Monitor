@@ -1,6 +1,6 @@
 LOG_FILE_PATH = /var/log/nginx/my-site/access.log
 MNEMONIC = seed words of length twelve or twenty four
 INFURA_ENDPOINT = https://rinkeby.infura.io/v3/my-api-keys
-LOGGER_CONTRACT_ADDRESS = 0x83CaCC73B360443935344d525767cA2fF94C55eD
+LOGGER_CONTRACT_ADDRESS = 0xD3F3299e9E392e523a157B8F0aE647f328032992
 REPO_PATH = ~/textile
 THRDS_DEBUG = true

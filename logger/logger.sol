@@ -8,7 +8,7 @@ pragma solidity ^0.8.0;
 contract Logger {
     
     // event for logging
-    event Log(address indexed sender, string indexed data);
+    event Log(address indexed sender, string data);
 
     /**
      * @dev dataLog create a log for the sender

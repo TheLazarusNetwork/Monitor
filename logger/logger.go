@@ -27,10 +27,10 @@ var (
 )
 
 // LoggerABI is the input ABI used to generate the binding from.
-const LoggerABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"string\",\"name\":\"data\",\"type\":\"string\"}],\"name\":\"Log\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"data\",\"type\":\"string\"}],\"name\":\"dataLog\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const LoggerABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"data\",\"type\":\"string\"}],\"name\":\"Log\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"data\",\"type\":\"string\"}],\"name\":\"dataLog\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // LoggerBin is the compiled bytecode used for deploying new contracts.
-var LoggerBin = "0x608060405234801561001057600080fd5b506102b7806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c806353f2b23714610030575b600080fd5b61004a60048036038101906100459190610110565b61004c565b005b8060405161005a9190610182565b60405180910390203373ffffffffffffffffffffffffffffffffffffffff167f0738f4da267a110d810e6e89fc59e46be6de0c37b1d5cd559b267dc3688e74e060405160405180910390a350565b60006100bb6100b6846101ca565b610199565b9050828152602081018484840111156100d357600080fd5b6100de848285610210565b509392505050565b600082601f8301126100f757600080fd5b81356101078482602086016100a8565b91505092915050565b60006020828403121561012257600080fd5b600082013567ffffffffffffffff81111561013c57600080fd5b610148848285016100e6565b91505092915050565b600061015c826101fa565b6101668185610205565b935061017681856020860161021f565b80840191505092915050565b600061018e8284610151565b915081905092915050565b6000604051905081810181811067ffffffffffffffff821117156101c0576101bf610252565b5b8060405250919050565b600067ffffffffffffffff8211156101e5576101e4610252565b5b601f19601f8301169050602081019050919050565b600081519050919050565b600081905092915050565b82818337600083830152505050565b60005b8381101561023d578082015181840152602081019050610222565b8381111561024c576000848401525b50505050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052604160045260246000fdfea2646970667358221220681476aea1e9311eec21d0241fcd34634cf3f2e7833d0e63aee9d7f43347047064736f6c63430008000033"
+var LoggerBin = "0x608060405234801561001057600080fd5b506102d6806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c806353f2b23714610030575b600080fd5b61004a60048036038101906100459190610105565b61004c565b005b3373ffffffffffffffffffffffffffffffffffffffff167f0738f4da267a110d810e6e89fc59e46be6de0c37b1d5cd559b267dc3688e74e082604051610092919061017f565b60405180910390a250565b60006100b06100ab846101d2565b6101a1565b9050828152602081018484840111156100c857600080fd5b6100d384828561021e565b509392505050565b600082601f8301126100ec57600080fd5b81356100fc84826020860161009d565b91505092915050565b60006020828403121561011757600080fd5b600082013567ffffffffffffffff81111561013157600080fd5b61013d848285016100db565b91505092915050565b600061015182610202565b61015b818561020d565b935061016b81856020860161022d565b6101748161028f565b840191505092915050565b600060208201905081810360008301526101998184610146565b905092915050565b6000604051905081810181811067ffffffffffffffff821117156101c8576101c7610260565b5b8060405250919050565b600067ffffffffffffffff8211156101ed576101ec610260565b5b601f19601f8301169050602081019050919050565b600081519050919050565b600082825260208201905092915050565b82818337600083830152505050565b60005b8381101561024b578082015181840152602081019050610230565b8381111561025a576000848401525b50505050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052604160045260246000fd5b6000601f19601f830116905091905056fea264697066735822122051d1d54c6e6dd1de8e09ed351a131f6182aa186ab4eb606a5b259e33925c696464736f6c63430008000033"
 
 // DeployLogger deploys a new Ethereum contract, binding an instance of Logger to it.
 func DeployLogger(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Logger, error) {
@@ -279,25 +279,21 @@ func (it *LoggerLogIterator) Close() error {
 // LoggerLog represents a Log event raised by the Logger contract.
 type LoggerLog struct {
 	Sender common.Address
-	Data   common.Hash
+	Data   string
 	Raw    types.Log // Blockchain specific contextual infos
 }
 
 // FilterLog is a free log retrieval operation binding the contract event 0x0738f4da267a110d810e6e89fc59e46be6de0c37b1d5cd559b267dc3688e74e0.
 //
-// Solidity: event Log(address indexed sender, string indexed data)
-func (_Logger *LoggerFilterer) FilterLog(opts *bind.FilterOpts, sender []common.Address, data []string) (*LoggerLogIterator, error) {
+// Solidity: event Log(address indexed sender, string data)
+func (_Logger *LoggerFilterer) FilterLog(opts *bind.FilterOpts, sender []common.Address) (*LoggerLogIterator, error) {
 
 	var senderRule []interface{}
 	for _, senderItem := range sender {
 		senderRule = append(senderRule, senderItem)
 	}
-	var dataRule []interface{}
-	for _, dataItem := range data {
-		dataRule = append(dataRule, dataItem)
-	}
 
-	logs, sub, err := _Logger.contract.FilterLogs(opts, "Log", senderRule, dataRule)
+	logs, sub, err := _Logger.contract.FilterLogs(opts, "Log", senderRule)
 	if err != nil {
 		return nil, err
 	}
@@ -306,19 +302,15 @@ func (_Logger *LoggerFilterer) FilterLog(opts *bind.FilterOpts, sender []common.
 
 // WatchLog is a free log subscription operation binding the contract event 0x0738f4da267a110d810e6e89fc59e46be6de0c37b1d5cd559b267dc3688e74e0.
 //
-// Solidity: event Log(address indexed sender, string indexed data)
-func (_Logger *LoggerFilterer) WatchLog(opts *bind.WatchOpts, sink chan<- *LoggerLog, sender []common.Address, data []string) (event.Subscription, error) {
+// Solidity: event Log(address indexed sender, string data)
+func (_Logger *LoggerFilterer) WatchLog(opts *bind.WatchOpts, sink chan<- *LoggerLog, sender []common.Address) (event.Subscription, error) {
 
 	var senderRule []interface{}
 	for _, senderItem := range sender {
 		senderRule = append(senderRule, senderItem)
 	}
-	var dataRule []interface{}
-	for _, dataItem := range data {
-		dataRule = append(dataRule, dataItem)
-	}
 
-	logs, sub, err := _Logger.contract.WatchLogs(opts, "Log", senderRule, dataRule)
+	logs, sub, err := _Logger.contract.WatchLogs(opts, "Log", senderRule)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +344,7 @@ func (_Logger *LoggerFilterer) WatchLog(opts *bind.WatchOpts, sink chan<- *Logge
 
 // ParseLog is a log parse operation binding the contract event 0x0738f4da267a110d810e6e89fc59e46be6de0c37b1d5cd559b267dc3688e74e0.
 //
-// Solidity: event Log(address indexed sender, string indexed data)
+// Solidity: event Log(address indexed sender, string data)
 func (_Logger *LoggerFilterer) ParseLog(log types.Log) (*LoggerLog, error) {
 	event := new(LoggerLog)
 	if err := _Logger.contract.UnpackLog(event, "Log", log); err != nil {
