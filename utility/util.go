@@ -1,8 +1,13 @@
 package utility
 
+import log "github.com/sirupsen/logrus"
+
+// Version Build Version
+var Version = "0.1"
+
 // CheckError for checking any errors
-func CheckError(err error) {
+func CheckError(message string, err error) {
 	if err != nil {
-		panic(err)
+		log.Fatalf("%s %+v", message, err)
 	}
 }
