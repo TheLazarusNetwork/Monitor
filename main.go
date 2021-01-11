@@ -130,7 +130,7 @@ func main() {
 		}
 		log.Infof("Encrypted Log Data: %s", hex.EncodeToString(encryptedLogData))
 
-		tx, err := instance.DataLog(auth, string(encryptedLogData))
+		tx, err := instance.DataLog(auth, hex.EncodeToString(encryptedLogData))
 		utility.CheckError("Unable to write into the contract method:", err)
 
 		// Decryption
