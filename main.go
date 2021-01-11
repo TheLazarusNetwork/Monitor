@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"math"
 	"math/big"
 	"os"
@@ -10,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/TheLazarusNetwork/Monitor/logger"
@@ -51,12 +54,8 @@ func main() {
 	privateKeyBytes := crypto.FromECDSA(privateKey)
 	privateKeyHex := hexutil.Encode(privateKeyBytes) // hexutil.Encode(privateKeyBytes)[2:] for without 0x
 	publicKeyBytes := crypto.FromECDSAPub(publicKey)
-	publicKeyHex := hexutil.Encode(publicKeyBytes[1:])
+	publicKeyHex := hexutil.Encode(publicKeyBytes[1:]) // As Ethereum does not DER encode its public keys, public keys in Ethereum are only 64 bytes long
 	walletAddress := crypto.PubkeyToAddress(*publicKey).Hex()
-
-	infuraEndPoint := viper.Get("INFURA_ENDPOINT").(string)
-	client, err := ethclient.Dial(infuraEndPoint)
-	utility.CheckError("Error in connecting to Infura EndPoint:", err)
 
 	// Display mnemonic and keys
 	log.Infof("Mnemonic: %s", mnemonic)
@@ -64,6 +63,15 @@ func main() {
 	log.Infof("ETH Public Key: %s", publicKeyHex)
 	log.Infof("ETH Wallet Address: %s", walletAddress)
 	log.Infof("Path: %s", *path)
+
+	// ECIES Encryption and Decryption
+	ecdsaPrivateKey, err := crypto.HexToECDSA(hexutil.Encode(privateKeyBytes)[2:])
+	eciesPrivateKey := ecies.ImportECDSA(ecdsaPrivateKey)
+	eciesPublicKey := eciesPrivateKey.PublicKey
+
+	infuraEndPoint := viper.Get("INFURA_ENDPOINT").(string)
+	client, err := ethclient.Dial(infuraEndPoint)
+	utility.CheckError("Error in connecting to Infura EndPoint:", err)
 
 	nonce, err := client.PendingNonceAt(context.Background(), crypto.PubkeyToAddress(*publicKey))
 	utility.CheckError("Error in fetching nonce:", err)
@@ -85,21 +93,6 @@ func main() {
 	auth.Value = big.NewInt(0)     // in wei
 	auth.GasLimit = uint64(300000) // in units
 	auth.GasPrice = gasPrice
-
-	// Deploy the Logger Smart Contract and print the contract address and transaction hash
-	// loggerAddress, tx, instance, err := logger.DeployLogger(auth, client)
-	// utility.CheckError("Unable to bind to deployed instance of contract:", err)
-	// _ = instance
-	// fmt.Println(loggerAddress.Hex())
-	// fmt.Println(tx.Hash().Hex())
-
-	// Load the Logger Contract (if already deployed)
-	// loggerAddress := common.HexToAddress(viper.Get("LOGGER_CONTRACT_ADDRESS").(string))
-	// instance, err := logger.NewLogger(loggerAddress, client)
-	// utility.CheckError("Unable to load instance of the deployed contract:", err)
-	// tx, err := instance.DataLog(auth, "Testing Logger datafeed...1")
-	// utility.CheckError("Unable to call the contract method:", err)
-	// fmt.Printf("TX Hash: %s", tx.Hash().Hex())
 
 	var fileName = viper.Get("LOG_FILE_PATH").(string)
 
@@ -130,8 +123,21 @@ func main() {
 		instance, err := logger.NewLogger(loggerAddress, client)
 		utility.CheckError("Unable to load instance of the deployed contract:", err)
 
-		tx, err := instance.DataLog(auth, line.Text)
+		// Encrypt the log data
+		encryptedLogData, err := ecies.Encrypt(rand.Reader, &eciesPublicKey, []byte(line.Text), nil, nil)
+		if err != nil {
+			panic(err)
+		}
+		log.Infof("Encrypted Log Data: %s", hex.EncodeToString(encryptedLogData))
+
+		tx, err := instance.DataLog(auth, string(encryptedLogData))
 		utility.CheckError("Unable to write into the contract method:", err)
-		log.Infof("TX Hash: %s --> DataLog: %s", tx.Hash().Hex(), line.Text)
+
+		// Decryption
+		decryptedLogData, err := eciesPrivateKey.Decrypt(encryptedLogData, nil, nil)
+		if err != nil {
+			panic(err)
+		}
+		log.Infof("TX Hash: %s --> Decrypted DataLog: %s", tx.Hash().Hex(), string(decryptedLogData))
 	}
 }
